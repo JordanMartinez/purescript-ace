@@ -34,12 +34,12 @@ import Ace.Types (Document, Position, Range, NewlineMode, Anchor, DocumentEvent,
 import Effect (Effect)
 import Control.Monad.Except (runExcept)
 
-import Data.Either (fromRight)
+import Data.Either (either)
 import Foreign (Foreign)
 import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3, Fn4, runFn4)
 import Data.Nullable (Nullable)
 
-import Partial.Unsafe (unsafePartial)
+import Partial.Unsafe (unsafeCrashWith)
 
 foreign import onChangeImpl
   :: forall a
@@ -49,7 +49,7 @@ onChange
   :: forall a
    . Document -> (DocumentEvent -> Effect a)
   -> Effect Unit
-onChange self fn = runFn2 onChangeImpl self (fn <<< (unsafePartial fromRight) <<< runExcept <<< readDocumentEvent)
+onChange self fn = runFn2 onChangeImpl self (fn <<< (either (\_ -> unsafeCrashWith "onChange - Value was Left") identity) <<< runExcept <<< readDocumentEvent)
 
 foreign import setValueImpl
   :: Fn2 String Document (Effect Unit)
